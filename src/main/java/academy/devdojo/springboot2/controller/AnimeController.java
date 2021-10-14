@@ -6,11 +6,14 @@ import academy.devdojo.springboot2.requests.AnimePutRequestBody;
 import academy.devdojo.springboot2.util.DateUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import academy.devdojo.springboot2.service.AnimeService;
 
+import javax.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -29,6 +32,12 @@ public class AnimeController {
         return new ResponseEntity<>(animeService.listAll(), HttpStatus.OK); //Ao invés de retornarmos apenas o objeto no formato "JSON", estamos retornando um objeto do tipo "ResponseEntity", que é uma resposta HTTP completa, assim, dentro dessa resposta, estamos retornando, além da listagem de todos os objetos do tipo "Anime", um status "200", que é o status "OK" e que indica que a requisição foi retornada corretamente.
     }
 
+    @GetMapping(path = "listPage") //O método abaixo poderá ser executado através de uma requisição "get" na URL abaixo.
+    //URL (GET): http://127.0.0.1:8080/animes/list
+    public ResponseEntity<Page<Anime>> list(Pageable pageable){ //Método que retornará uma lista com os animes abaixo.
+        return new ResponseEntity<>(animeService.listAll(pageable), HttpStatus.OK); //Ao invés de retornarmos apenas o objeto no formato "JSON", estamos retornando um objeto do tipo "ResponseEntity", que é uma resposta HTTP completa, assim, dentro dessa resposta, estamos retornando, além da listagem de todos os objetos do tipo "Anime", um status "200", que é o status "OK" e que indica que a requisição foi retornada corretamente.
+    }
+
     @GetMapping(path = "/{id}") //O "/{id}" significa que o valor do objeto "id", que é do tipo "Long", será passado através da URL.
     //URL (GET): http://127.0.0.1:8080/animes/id
     public ResponseEntity<Anime> findById(@PathVariable Long id){ //O valor que foi passado no espaço cujo nome é "id" da URL será inserido nesse objeto.
@@ -36,9 +45,16 @@ public class AnimeController {
         return new ResponseEntity<>(animeService.findByIdOrThrowBadRequestException(id), HttpStatus.OK); //Ao invés de retornarmos apenas o objeto no formato "JSON", estamos retornando um objeto do tipo "ResponseEntity", que é uma resposta HTTP completa, assim, dentro dessa resposta, estamos retornando, além de um objeto do tipo "Anime", um status "200", que é o status "OK" e que indica que a requisição foi retornada corretamente.
     }
 
+    @GetMapping(path = "/find")
+    //URL (GET): http://127.0.0.1:8080/animes/find?nome={nomeDoAnime}"
+    public ResponseEntity<List<Anime>> findByNome(@RequestParam String nome){
+        log.info(dateUtil.formatLocalDateTimeToDatabaseStyle(LocalDateTime.now()));
+        return new ResponseEntity<>(animeService.findByNome(nome), HttpStatus.OK); //Método que retorna um objeto do tipo "ResponseEntity" que contém o objeto do tipo "List<Anime>" desejado e um status HTTP que indica que a requisição foi realizada com sucesso.
+    }
+
     @PostMapping //Esse método será executado através de uma requisição HTTP do tipo "POST".
     //URL (POST - Passar JSON apenas com o objeto do tipo "Anime" com o atributo "nome" e o valor desse atributo): http://127.0.0.1:8080/animes
-    public ResponseEntity<Anime> save(@RequestBody AnimePostRequestBody animePostRequestBody) { //O objeto que será inserido no parâmetro "animePostRequestBody" será enviado através do "body" de uma requisição do tipo "POST" que será realizada na URL "http://127.0.0.1:8080/animes".
+    public ResponseEntity<Anime> save(@RequestBody @Valid AnimePostRequestBody animePostRequestBody) { //O objeto que será inserido no parâmetro "animePostRequestBody" será enviado através do "body" de uma requisição do tipo "POST" que será realizada na URL "http://127.0.0.1:8080/animes". A anotação "@Valid" obriga que o objeto recebido por esse método, que é do tipo "AnimePostRequestBody", possua o valor do atributo "nome" vazio ou "null", caso contrário, será lançada uma exception do próprio Spring.
         return new ResponseEntity<>(animeService.save(animePostRequestBody), HttpStatus.CREATED); //Estamos retornando uma requisição que contém o retorno do método "save()" com o status HTTP "CREATED".
     }
 
